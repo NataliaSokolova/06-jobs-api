@@ -1,3 +1,8 @@
+console.log("Serving static files from the 'public' folder.");
+window.alert("index.js is loaded!");
+
+
+
 let activeDiv = null;
 export const setDiv = (newDiv) => {
   if (newDiv != activeDiv) {
@@ -46,3 +51,4 @@ document.addEventListener("DOMContentLoaded", () => {
     showLoginRegister();
   }
 });
+
