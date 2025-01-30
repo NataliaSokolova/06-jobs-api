@@ -1,37 +1,24 @@
-const User = require('../models/User')
-const {StatusCodes} = require('http-status-codes')
-const {BadRequestError, UnauthenticatedError} = require('../errors')
+import User from "../models/User.js";
+import { StatusCodes } from "http-status-codes";
 
-const register = async (req, res) => { 
-  const user = await User.create({ ...req.body })
-   const token = user.createJWT()
-  res.status(StatusCodes.CREATED).json({user: {name: user.name },token});
-}
-const login = async (req, res) => {
-    const  {email,password} = req.body
+async function register(req, res) {
+  const user = await User.create({ ...req.body });
+  const token = user.createJWT();
 
-    if(!email || !password) {
-        throw new BadRequestError('Please provide email and password')
-    }
-
-    const user = await User.findOne({email})
-
-// compare password
-
-if(!user){
-    throw new UnauthenticatedError('Invalid Credentioals')
-}
-const isPasswordCorrect = await user.comparePassword(password)
-if(!isPasswordCorrect){
-    throw new UnauthenticatedError('Invalid Credentioals')
-}
-const token = user.createJWT();
-res.status(StatusCodes.OK).json({user:{ name: user.name}, token})
-
+  res.status(StatusCodes.CREATED).json({ user: { name: user.name }, token });
 }
 
-module.exports = {
-    register,
-    login,
+async function login(req, res) {
+  const user = await User.checkExistUser(req.body);
 
+  if (!user) {
+    return res
+      .status(StatusCodes.UNAUTHORIZED)
+      .json({ error: "Invalid Credentials" });
+  }
+
+  const token = user.createJWT();
+  res.status(StatusCodes.OK).json({ user: { name: user.name }, token });
 }
+
+export { register, login };

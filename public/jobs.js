@@ -1,207 +1,132 @@
 import {
-    inputEnabled,
-    setDiv,
-    message,
-    setToken,
-    token,
-    enableInput,
-  } from "./index.js";
-  import { showLoginRegister } from "./loginRegister.js";
-  import { showAddEdit } from "./addEdit.js";
-  
-  let jobsDiv = null;
-  let jobsTable = null;
-  let jobsTableHeader = null;
-  
-  export const handleJobs = () => {
-    jobsDiv = document.getElementById("jobs");
-    const logoff = document.getElementById("logoff");
-    const addJob = document.getElementById("add-job");
-    jobsTable = document.getElementById("jobs-table");
-    jobsTableHeader = document.getElementById("jobs-table-header");
-  
-    logoff.addEventListener("click", (e) => {
-      if (inputEnabled) {
-        e.preventDefault();
-        setToken(null);
-        message.textContent = "You have been logged off.";
-        jobsTable.replaceChildren([jobsTableHeader]);
-        showLoginRegister();
-      }
-    });
-  
-    addJob.addEventListener("click", (e) => {
-      if (inputEnabled) {
-        e.preventDefault();
+  inputEnabled,
+  setDiv,
+  message,
+  setToken,
+  token,
+  enableInput,
+} from "./index.js";
+import { showLoginRegister } from "./loginRegister.js";
+import { showAddEdit } from "./addEdit.js";
+import handleDelete from "./delete.js";
+
+let jobsDiv = null;
+let jobsTable = null;
+let jobsTableHeader = null;
+
+// This is inside handleJobs.js
+export const handleJobs = () => {
+  jobsDiv = document.getElementById("jobs");
+  const logoff = document.getElementById("logoff");
+  const addJob = document.getElementById("add-job");
+  jobsTable = document.getElementById("jobs-table");
+  jobsTableHeader = document.getElementById("jobs-table-header");
+
+  jobsDiv.addEventListener("click", async (e) => {
+    if (inputEnabled && e.target.nodeName === "BUTTON") {
+      if (e.target === addJob) {
         showAddEdit(null);
-      }
-    });
-  };
-  
+      } else if (e.target === logoff) {
+        setToken(null);
 
+        message.textContent = "You have been logged off.";
 
+        jobsTable.replaceChildren([jobsTableHeader]);
 
-  export const showJobs = async () => {
-    try {
-      enableInput(false);
-      const response = await fetch("/api/v1/jobs", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-  
-      if (response.status === 200) {
-        let children = [jobsTableHeader];
-        if (data.count === 0) {
-          jobsTable.replaceChildren(...children); // clear this for safety
-        } else {
-          for (let i = 0; i < data.jobs.length; i++) {
-            let rowEntry = document.createElement("tr");
-            let editButton = document.createElement("button");
-            editButton.type = "button";
-            editButton.className = "editButton";
-            editButton.dataset.id = data.jobs[i]._id;
-            editButton.textContent = "edit";
-  
-            let deleteButton = document.createElement("button");
-            deleteButton.type = "button";
-            deleteButton.className = "deleteButton";
-            deleteButton.dataset.id = data.jobs[i]._id;
-            deleteButton.textContent = "delete";
-  
-            rowEntry.innerHTML = `
-              <td>${data.jobs[i].company}</td>
-              <td>${data.jobs[i].position}</td>
-              <td>${data.jobs[i].status}</td>
-            `;
-            let buttonsCell = document.createElement("td");
-            buttonsCell.appendChild(editButton);
-            buttonsCell.appendChild(deleteButton);
-            rowEntry.appendChild(buttonsCell);
-  
-            children.push(rowEntry);
-          }
-          jobsTable.replaceChildren(...children);
-  
-          // Add event listeners for edit and delete buttons
-          const editButtons = document.querySelectorAll(".editButton");
-          editButtons.forEach((button) => {
-            button.addEventListener("click", (e) => {
-              message.textContent = "";
-              showAddEdit(e.target.dataset.id);
-            });
-          });
-  
-          const deleteButtons = document.querySelectorAll(".deleteButton");
-        //   deleteButtons.forEach((button) => {
-        //     button.addEventListener("click", async (e) => {
-        //       const jobId = e.target.dataset.id;
-        //       try {
-        //         const response = await fetch(`/api/v1/jobs/${jobId}`, {
-        //           method: "DELETE",
-        //           headers: {
-        //             "Content-Type": "application/json",
-        //             Authorization: `Bearer ${token}`,
-        //           },
-        //         });
-        //         if (response.ok) {
-        //           message.textContent = "Job deleted successfully.";
-        //           showJobs(); // Refresh the jobs list after deletion
-        //         } else {
-        //           message.textContent = "Failed to delete job.";
-        //         }
-        //       } catch (err) {
-        //         console.error(err);
-        //         message.textContent = "A communication error occurred.";
-        //       }
-        //     });
-        //   });
-        // }
+        showLoginRegister();
+      } else if (e.target.classList.contains("editButton")) {
+        message.textContent = "";
+        showAddEdit(e.target.dataset.id);
+      } else if (e.target.classList.contains("deleteButton")) {
+        message.textContent = "Deleting...";
 
-        deleteButtons.forEach((button) => {
-          button.addEventListener("click", async (e) => {
-            const jobId = e.target.dataset.id;
-            try {
-              const response = await fetch(`/api/v1/jobs/${jobId}`, {
-                method: "DELETE",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-              });
-              const data = await response.json();
-              if (response.status === 200) {
-                message.textContent = "The job entry was deleted.";
-                showJobs(); // Refresh the jobs list after deletion
-              } else {
-                message.textContent = data.msg;
-              }
-            } catch (err) {
-              console.error(err);
-              message.textContent = "A communication error occurred.";
+        const jobId = e.target.dataset.id;
+
+        enableInput(false);
+
+        try {
+          const response = await fetch(
+            `http://localhost:3000/api/v1/jobs/${jobId}`, // Correct endpoint
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
             }
-          });
-        });
+          );
 
+          const data = await response.json();
 
+          if (response.status === 200) {
+            message.textContent = "The job entry was deleted.";
 
+            // Remove the job from the UI
+            const jobElement = document.querySelector(
+              `[data-job-id="${jobId}"]`
+            );
+            if (jobElement) {
+              jobElement.remove();
+            }
 
+            // Optionally, you can refresh the job list
+            showJobs();
+          } else {
+            message.textContent = data.msg;
+          }
+        } catch (err) {
+          console.log(err);
+          message.textContent = "A communication error occurred.";
+        }
 
+        enableInput(true);
+      }
+    }
+  });
+};
 
+export const showJobs = async () => {
+  try {
+    enableInput(false);
+
+    const response = await fetch("http://localhost:3000/api/v1/jobs", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+    let children = [jobsTableHeader];
+
+    if (response.status === 200) {
+      if (data.count === 0) {
+        jobsTable.replaceChildren(...children); // clear this for safety
       } else {
-        message.textContent = data.msg || "Failed to fetch jobs.";
+        for (let i = 0; i < data.jobs.length; i++) {
+          let rowEntry = document.createElement("tr");
+
+          let editButton = `<td><button type="button" class="editButton" data-id=${data.jobs[i]._id}>edit</button></td>`;
+          let deleteButton = `<td><button type="button" class="deleteButton" data-id=${data.jobs[i]._id}>delete</button></td>`;
+          let rowHTML = `
+            <td>${data.jobs[i].company}</td>
+            <td>${data.jobs[i].position}</td>
+            <td>${data.jobs[i].status}</td>
+            <div>${editButton}${deleteButton}</div>`;
+
+          rowEntry.innerHTML = rowHTML;
+          children.push(rowEntry);
+        }
+        jobsTable.replaceChildren(...children);
       }
-    } catch (err) {
-      console.error(err);
-      message.textContent = "A communication error occurred.";
-    } finally {
-      enableInput(true);
-      setDiv(jobsDiv);
+    } else {
+      message.textContent = data.msg;
     }
-  };
-  
-  const fetchJobs = async () => {
-    try {
-      // Replace with actual API endpoint
-      const response = await fetch("/api/jobs", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error("Failed to fetch jobs.");
-      }
-  
-      return await response.json();
-    } catch (error) {
-      message.textContent = "Error fetching jobs: " + error.message;
-      console.error("Error fetching jobs:", error);
-      return [];
-    }
-  };
-  
-  const deleteJob = async (jobId) => {
-    try {
-      // Replace with actual API endpoint
-      const response = await fetch(`/api/jobs/${jobId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-  
-      if (!response.ok) {
-        throw new Error("Failed to delete job.");
-      }
-  
-      message.textContent = "Job deleted successfully.";
-      showJobs(); // Refresh the jobs list after deletion
-    } catch (error) {
-      message.textContent = "Error deleting job: " + error.message;
-      console.error("Error deleting job:", error);
-    }
-  };
+  } catch (err) {
+    console.log(err);
+    message.textContent = "A communication error occurred.";
+  }
+  enableInput(true);
+  setDiv(jobsDiv);
+};

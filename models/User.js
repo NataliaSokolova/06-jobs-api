@@ -1,51 +1,68 @@
-const mongoose = require('mongoose')
-const bcrypt = require('bcryptjs')
-const jwt = require('jsonwebtoken')
-
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const UserSchema = new mongoose.Schema({
-    name:{
-        type: String,
-        require:[true, 'Please provide name'],
-        minlength: 3,
-        maxlength: 50
-    },
+  name: {
+    type: String,
+    required: [true, "Please provide name"],
+    minlength: 3,
+    maxlength: 25,
+  },
+  email: {
+    type: String,
+    required: [true, "Please provide email"],
+    match: [
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+      "Please provide valid email",
+    ],
+    unique: true,
+  },
+  password: {
+    type: String,
+    required: [true, "Please provide password"],
+    minlength: 6,
+  },
+});
 
-    email:{
-        type: String,
-        required: [true, 'Please provide email'],
-        match: [
-          /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-          'Please provide a valid email',
-        ],
-        unique: true,
-    },
-
-    password:{
-        type: String,
-        require:[true, 'Please provide password'],
-        minlength: 6,
-    },
-
-})
-
-
-UserSchema.pre('save', async function(next){
-
-    const salt = await bcrypt.genSalt(10)
-    this.password = await bcrypt.hash(this.password,salt)
-    next()
-})
+UserSchema.pre("save", async function () {
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+});
 
 UserSchema.methods.createJWT = function () {
-    return jwt.sign({userId:this._id, name: this.name }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_LIFETIME,
-      })
-}
+  return jwt.sign(
+    { userId: this._id, name: this.name },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_LIFETIME,
+    }
+  );
+};
 
-UserSchema.methods.comparePassword = async function (canditatePassword){
-    const isMatch = await bcrypt.compare(canditatePassword, this.password)
-    return isMatch
-}
+UserSchema.methods.comparePassword = async function (password) {
+  const isMatch = await bcrypt.compare(password, this.password);
+  return isMatch;
+};
 
-module.exports = mongoose.model('User', UserSchema)
+UserSchema.statics.checkExistUser = async function (body) {
+  const { email, password } = body;
+
+  if (!email || !password) {
+    return null;
+  }
+
+  const user = await this.findOne({ email });
+  if (!user) {
+    return null;
+  }
+
+  const isPasswordCorrect = await user.comparePassword(password);
+  if (!isPasswordCorrect) {
+    return null;
+  }
+
+  return user;
+};
+
+export default mongoose.model("User", UserSchema);

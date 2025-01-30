@@ -4,18 +4,22 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./index.css" />
     <title>Jobs List</title>
   </head>
+
   <body>
     <h1>Jobs List</h1>
     <hr />
     <p id="message"></p>
     <hr />
-    <div id="logon-register" style="display:none;">
+
+    <div id="logon-register" style="display: none">
       <button type="button" id="logon">logon</button>
       <button type="button" id="register">register</button>
     </div>
-    <div id="logon-div" style="display:none;">
+
+    <div id="logon-div" style="display: none">
       <form>
         <div>
           <label for="email">email:</label>
@@ -29,7 +33,8 @@
         <button type="button" id="logon-cancel">cancel</button>
       </form>
     </div>
-    <div id="register-div" style="display:none;">
+
+    <div id="register-div" style="display: none">
       <form>
         <div>
           <label for="name">name:</label>
@@ -51,7 +56,7 @@
         <button type="button" id="register-cancel">cancel</button>
       </form>
     </div>
-    <div id="jobs" style="display:none;">
+    <div id="jobs" style="display: none">
       <p id="jobs-message"></p>
       <table id="jobs-table">
         <tr id="jobs-table-header">
@@ -64,7 +69,8 @@
       <button type="button" id="add-job">add job</button>
       <button type="button" id="logoff">log off</button>
     </div>
-    <div id="edit-job" style="display:none;">
+
+    <div id="edit-job" style="display: none">
       <form>
         <div>
           <label for="company">company:</label>

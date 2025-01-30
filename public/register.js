@@ -21,49 +21,68 @@ import {
     email1 = document.getElementById("email1");
     password1 = document.getElementById("password1");
     password2 = document.getElementById("password2");
-  
     const registerButton = document.getElementById("register-button");
     const registerCancel = document.getElementById("register-cancel");
   
-    registerButton.addEventListener("click", (e) => {
-      if (inputEnabled) {
-        e.preventDefault();
-        const enteredName = name.value.trim();
-        const enteredEmail = email1.value.trim();
-        const enteredPassword1 = password1.value.trim();
-        const enteredPassword2 = password2.value.trim();
+    registerDiv.addEventListener("click", async (e) => {
+      if (inputEnabled && e.target.nodeName === "BUTTON") {
+        if (e.target === registerButton) {
+          if (password1.value != password2.value) {
+            message.textContent = "The passwords entered do not match.";
+          } else {
+            enableInput(false);
   
-        if (!enteredName || !enteredEmail || !enteredPassword1 || !enteredPassword2) {
-          message.textContent = "All fields are required.";
-          return;
+            try {
+              const response = await fetch(
+                "http://localhost:3000/api/v1/auth/register",
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    name: name.value,
+                    email: email1.value,
+                    password: password1.value,
+                  }),
+                }
+              );
+  
+              const data = await response.json();
+              if (response.status === 201) {
+                message.textContent = `Registration successful.  Welcome ${data.user.name}`;
+                setToken(data.token);
+  
+                name.value = "";
+                email1.value = "";
+                password1.value = "";
+                password2.value = "";
+  
+                showJobs();
+              } else {
+                message.textContent = data.msg;
+              }
+            } catch (err) {
+              console.error(err);
+              message.textContent = "A communications error occurred.";
+            }
+  
+            enableInput(true);
+          }
+        } else if (e.target === registerCancel) {
+          name.value = "";
+          email1.value = "";
+          password1.value = "";
+          password2.value = "";
+          showLoginRegister();
         }
-  
-        if (enteredPassword1 !== enteredPassword2) {
-          message.textContent = "Passwords do not match.";
-          return;
-        }
-  
-        // Simulate registration process (replace with actual API call)
-        setTimeout(() => {
-          message.textContent = "Registration successful!";
-          setToken("dummy-token"); // Replace with actual token
-          showJobs();
-        }, 1000);
-      }
-    });
-  
-    registerCancel.addEventListener("click", (e) => {
-      if (inputEnabled) {
-        e.preventDefault();
-        showLoginRegister();
       }
     });
   };
   
   export const showRegister = () => {
-    name.value = "";
-    email1.value = "";
-    password1.value = "";
-    password2.value = "";
+    email1.value = null;
+    password1.value = null;
+    password2.value = null;
     setDiv(registerDiv);
   };

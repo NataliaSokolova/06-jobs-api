@@ -6,7 +6,6 @@ let company = null;
 let position = null;
 let status = null;
 let addingJob = null;
-let editCancel = null;
 
 export const handleAddEdit = () => {
   addEditDiv = document.getElementById("edit-job");
@@ -14,18 +13,21 @@ export const handleAddEdit = () => {
   position = document.getElementById("position");
   status = document.getElementById("status");
   addingJob = document.getElementById("adding-job");
-  editCancel = document.getElementById("edit-cancel");
+  const editCancel = document.getElementById("edit-cancel");
 
   addEditDiv.addEventListener("click", async (e) => {
     if (inputEnabled && e.target.nodeName === "BUTTON") {
       if (e.target === addingJob) {
         enableInput(false);
+
         let method = "POST";
-        let url = "/api/v1/jobs";
+        let url = "http://localhost:3000/api/v1/jobs/";
+
         if (addingJob.textContent === "update") {
           method = "PATCH";
-          url = `/api/v1/jobs/${addEditDiv.dataset.id}`;
+          url = `http://localhost:3000/api/v1/jobs/${addEditDiv.dataset.id}`;
         }
+
         try {
           const response = await fetch(url, {
             method: method,
@@ -39,6 +41,7 @@ export const handleAddEdit = () => {
               status: status.value,
             }),
           });
+
           const data = await response.json();
           if (response.status === 200 || response.status === 201) {
             if (response.status === 200) {
@@ -48,6 +51,7 @@ export const handleAddEdit = () => {
               // a 201 is expected for a successful create
               message.textContent = "The job entry was created.";
             }
+
             company.value = "";
             position.value = "";
             status.value = "pending";
@@ -56,37 +60,55 @@ export const handleAddEdit = () => {
             message.textContent = data.msg;
           }
         } catch (err) {
-          console.error(err);
+          console.log(err);
           message.textContent = "A communication error occurred.";
-        } finally {
-          enableInput(true);
         }
-      } else if (e.target === editCancel) {
-        message.textContent = "";
-        showJobs();
+        enableInput(true);
       }
+    }
+  });
+  // Cancel editing
+  editCancel.addEventListener("click", () => {
+    const confirmCancel = window.confirm("Are you sure you want to cancel?");
+    if (confirmCancel) {
+      // Clear the form fields
+      company.value = "";
+      position.value = "";
+      status.value = "pending";
+
+      // Hide the 'edit-job' section and show the jobs section
+      setDiv(addEditDiv, false); // Assuming `setDiv` handles visibility logic
+      setDiv(document.getElementById("jobs"), true); // Show jobs section
+
+      // Clear any messages
+      message.textContent = "";
     }
   });
 };
 
 export const showAddEdit = async (jobId) => {
+  const url = "http://localhost:3000/api/v1/jobs/"; // Define the URL here
+
   if (!jobId) {
     company.value = "";
     position.value = "";
     status.value = "pending";
     addingJob.textContent = "add";
     message.textContent = "";
+
     setDiv(addEditDiv);
   } else {
     enableInput(false);
+
     try {
-      const response = await fetch(`/api/v1/jobs/${jobId}`, {
+      const response = await fetch(`${url}${jobId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
+
       const data = await response.json();
       if (response.status === 200) {
         company.value = data.job.company;
@@ -95,17 +117,19 @@ export const showAddEdit = async (jobId) => {
         addingJob.textContent = "update";
         message.textContent = "";
         addEditDiv.dataset.id = jobId;
+
         setDiv(addEditDiv);
       } else {
+        // might happen if the list has been updated since last display
         message.textContent = "The jobs entry was not found";
         showJobs();
       }
     } catch (err) {
-      console.error(err);
+      console.log(err);
       message.textContent = "A communications error has occurred.";
       showJobs();
-    } finally {
-      enableInput(true);
     }
+
+    enableInput(true);
   }
 };

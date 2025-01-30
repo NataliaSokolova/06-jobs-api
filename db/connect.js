@@ -1,11 +1,7 @@
-const mongoose = require('mongoose')
+import mongoose from "mongoose";
 
 const connectDB = (url) => {
-  return mongoose.connect(url, {
-    // useNewUrlParser: true, // Use the new URL string parser
-    // useUnifiedTopology: true, // Use the new Server Discover and Monitoring engine
-   
-  })
-}
+  return mongoose.connect(url);
+};
 
-module.exports = connectDB
+export default connectDB;
