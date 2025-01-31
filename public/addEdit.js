@@ -21,11 +21,11 @@ export const handleAddEdit = () => {
         enableInput(false);
 
         let method = "POST";
-        let url = "http://localhost:3000/api/v1/jobs/";
+        let url = "/api/v1/jobs/";
 
         if (addingJob.textContent === "update") {
           method = "PATCH";
-          url = `http://localhost:3000/api/v1/jobs/${addEditDiv.dataset.id}`;
+          url = `/api/v1/jobs/${addEditDiv.dataset.id}`;
         }
 
         try {
@@ -87,7 +87,7 @@ export const handleAddEdit = () => {
 };
 
 export const showAddEdit = async (jobId) => {
-  const url = "http://localhost:3000/api/v1/jobs/"; // Define the URL here
+  const url = "/api/v1/jobs/"; // Define the URL here
 
   if (!jobId) {
     company.value = "";

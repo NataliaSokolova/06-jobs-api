@@ -8,7 +8,7 @@ export default function handleDelete() {
 
         try {
           const response = await fetch(
-            `http://localhost:3000/api/v1/jobs/${addEditDiv.dataset.id}`, // Fixed reference here
+            `/api/v1/jobs/${addEditDiv.dataset.id}`, // Fixed reference here
             {
               method: "DELETE",
               headers: {

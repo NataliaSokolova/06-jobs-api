@@ -14,7 +14,6 @@ let jobsDiv = null;
 let jobsTable = null;
 let jobsTableHeader = null;
 
-// This is inside handleJobs.js
 export const handleJobs = () => {
   jobsDiv = document.getElementById("jobs");
   const logoff = document.getElementById("logoff");
@@ -46,7 +45,7 @@ export const handleJobs = () => {
 
         try {
           const response = await fetch(
-            `http://localhost:3000/api/v1/jobs/${jobId}`, // Correct endpoint
+            `/api/v1/jobs/${jobId}`, // Correct endpoint
             {
               method: "DELETE",
               headers: {
@@ -89,7 +88,7 @@ export const showJobs = async () => {
   try {
     enableInput(false);
 
-    const response = await fetch("http://localhost:3000/api/v1/jobs", {
+    const response = await fetch("/api/v1/jobs", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

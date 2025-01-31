@@ -16,18 +16,43 @@ import authUser from "./middleware/authentication.js";
 const app = express();
 env.config();
 
+
+
+
 app.set("trust proxy", 1);
 app.use(RateLimiter({ windowMs: 15 * 60 * 1000, max: 100 }));
 app.use(express.json());
 app.use(helmet());
 app.use(xss());
-app.use(express.static("public"));
+
 app.use(cors());
 
-// // routes
-app.get("/", (req, res) => {
-  res.send('<h1>Jobs API</h1><a href="/api-docs">Documentation</a>');
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
 });
+
+// app.get('/proxy', async (req, res) => {
+//   try {
+//     const response = await axios.get(req.query.url);
+//     res.send(response.data);
+//   } catch (error) {
+//     res.status(500).send(error);
+//   }
+// });
+
+app.get('/api', (req, res) => {
+  res.json({ message: 'Hello from server!!!!' });
+});
+
+// // routes
+// app.get("/", (req, res) => {
+//   res.send('<h1>Jobs API</h1><a href="/api-docs">Documentation</a>');
+// });
+// app.use(express.static(path.join(__dirname, 'public')));
+ app.use(express.static("public"));
+
+
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/jobs", authUser, jobsRouter);
 
