@@ -15,14 +15,10 @@ import connectDB from "./db/connect.js";
 import authUser from "./middleware/authentication.js";
 import session from "express-session";
 import connectMongoDBSession from "connect-mongodb-session";
-import * as chai from "chai";
-import chaiHttp from "chai-http";
 
-chai.use(chaiHttp);
-
+env.config();
 
 const app = express();
-env.config();
 
 // **Security & Rate Limiting Middleware**
 app.set("trust proxy", 1);
@@ -40,21 +36,26 @@ app.use((req, res, next) => {
   next();
 });
 
-
+app.use((req, res, next) => {
+  if (req.path == "/multiply") {
+    res.set("Content-Type", "application/json");
+  } else {
+    res.set("Content-Type", "text/html");
+  }
+  next();
+});
 
 // **Basic API Route**
-app.get("/", (req, res) => {
+app.get("/test", (req, res) => {
   res.status(200).json({ message: "Hello from server!!!!" });
 });
-// **Define Multiply API
 
+// **Define Multiply API**
 app.get("/multiply", (req, res) => {
-  const { first, second } = req.query;
-  const result = parseInt(first) * parseInt(second);
-  res.status(200).json({ result });
+  const first = Number(req.query.first);
+  const second = Number(req.query.second);
+  res.status(200).json({ result: first * second });
 });
-
-
 
 // **Static Files**
 app.use(express.static("public"));
@@ -67,45 +68,56 @@ app.use("/api/v1/jobs", authUser, jobsRouter);
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
 
-// **MongoDB Session Store**
-const MongoDBStore = connectMongoDBSession(session);
+// **MongoDB Session Store** - Only initialize in non-test environments
+let store;
 
-let mongoURL = process.env.MONGO_URI;
-if (process.env.NODE_ENV === "test") {
-  mongoURL = process.env.MONGO_URI_TEST;
+if (process.env.NODE_ENV !== "test") {
+  const MongoDBStore = connectMongoDBSession(session);
+
+  store = new MongoDBStore({
+    uri: process.env.MONGO_URI,
+    collection: "sessions",
+  });
+
+  store.on("error", function (error) {
+    console.log(error);
+  });
 }
 
-const store = new MongoDBStore({
-  uri: mongoURL,
-  collection: "sessions",
-});
+// **Session Middleware** - Only use store in non-test environments
+if (process.env.NODE_ENV !== "test") {
+  app.use(
+    session({
+      secret: process.env.SESSION_SECRET || "supersecret",
+      resave: false,
+      saveUninitialized: false,
+      store: store,
+      cookie: { secure: process.env.NODE_ENV === "production" },
+    })
+  );
+}
 
-store.on("error", function (error) {
-  console.log(error);
-});
+// **Start Server (not automatically in test environment)**
+let server = null;
 
-// **Session Middleware**
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "supersecret",
-    resave: false,
-    saveUninitialized: false,
-    store: store,
-    cookie: { secure: process.env.NODE_ENV === "production" },
-  })
-);
-
-// **Start Server**
 const port = process.env.PORT || 3000;
-const start = async () => {
+
+const startServer = async () => {
   try {
-    await connectDB(mongoURL);
-    app.listen(port, () => console.log(`Server is listening on port ${port}...`));
+    await connectDB(process.env.MONGO_URI);
+    server = app.listen(port, () => {
+      console.log(`Server is listening on port ${port}...`);
+    });
   } catch (error) {
-    console.log(error);
+    console.error("Error starting server:", error);
   }
 };
 
-start();
+// Export startServer explicitly so it is called only when needed
+export { app, server, startServer };
 
-export { app };
+// **Only start server automatically in non-test environments**
+if (process.env.NODE_ENV !== "test") {
+  console.log("Not in test environment, starting server...");
+  startServer();
+}
